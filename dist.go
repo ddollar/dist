@@ -12,14 +12,14 @@ import (
 )
 
 type Dist struct {
-	Binary string
-	Host string
+	Binary  string
+	Host    string
 	Project string
 }
 
 type DistRelease struct {
 	Version string
-	Url string
+	Url     string
 }
 
 func NewDist(binary string, host string, project string) (d *Dist) {
