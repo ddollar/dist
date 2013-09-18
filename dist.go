@@ -84,7 +84,7 @@ func (d *Dist) fetchReleases() (releases []DistRelease, err error) {
 	for _, cert := range chain.Certificate {
 		x509Cert, err := x509.ParseCertificate(cert)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		config.RootCAs.AddCert(x509Cert)
 	}
@@ -93,7 +93,7 @@ func (d *Dist) fetchReleases() (releases []DistRelease, err error) {
 	client := &http.Client{Transport: &tr}
 	res, err := client.Get(url)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
