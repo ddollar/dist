@@ -4,15 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
+	"github.com/inconshreveable/go-update"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"runtime"
 )
 
 type Dist struct {
-	Binary  string
 	Host    string
 	Project string
 }
@@ -22,9 +20,8 @@ type DistRelease struct {
 	Url     string
 }
 
-func NewDist(binary string, host string, project string) (d *Dist) {
+func NewDist(host string, project string) (d *Dist) {
 	d = new(Dist)
-	d.Binary = binary
 	d.Host = host
 	d.Project = project
 	return
@@ -64,11 +61,6 @@ func (d *Dist) fetchReleases() (releases []DistRelease, err error) {
 }
 
 func (d *Dist) updateFromUrl(url string) (err error) {
-	output, err := os.Create(d.Binary)
-	defer output.Close()
-	res, err := http.Get(url)
-	defer res.Body.Close()
-	io.Copy(output, res.Body)
-	output.Chmod(0755)
+	err, _ = update.FromUrl(url)
 	return
 }
