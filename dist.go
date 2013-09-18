@@ -90,7 +90,7 @@ func (d *Dist) fetchReleases() (releases []DistRelease, err error) {
 
 func (d *Dist) httpClient() (client *http.Client) {
 	chain := d.rootCertificate()
-	config := tls.Config { }
+	config := tls.Config{}
 	config.RootCAs = x509.NewCertPool()
 	for _, cert := range chain.Certificate {
 		x509Cert, err := x509.ParseCertificate(cert)
@@ -100,7 +100,7 @@ func (d *Dist) httpClient() (client *http.Client) {
 		config.RootCAs.AddCert(x509Cert)
 	}
 	config.BuildNameToCertificate()
-	tr := http.Transport{ TLSClientConfig: &config}
+	tr := http.Transport{TLSClientConfig: &config}
 	client = &http.Client{Transport: &tr}
 	return
 }
