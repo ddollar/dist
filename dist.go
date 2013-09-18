@@ -108,6 +108,7 @@ func (d *Dist) httpClient() (client *http.Client) {
 func (d *Dist) updateFromUrl(url string) (err error) {
 	client := d.httpClient()
 	res, err := client.Get(url)
+	fmt.Println("updating from", url)
 	if err != nil {
 		return err
 	}
