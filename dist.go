@@ -76,7 +76,6 @@ func (d *Dist) UpdateTo(version string) (err error) {
 }
 
 func (d *Dist) fetchReleases() (releases []DistRelease, err error) {
-	fmt.Printf("host:%s project:%s goos:%s goarch:%s", d.Host, d.Project, runtime.GOOS, runtime.GOARCH)
 	url := fmt.Sprintf("%s/projects/%s/releases/%s-%s", d.Host, d.Project, runtime.GOOS, runtime.GOARCH)
 	client := d.httpClient()
 	res, err := client.Get(url)
