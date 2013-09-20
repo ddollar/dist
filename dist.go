@@ -63,7 +63,6 @@ func (d *Dist) Update(from string) (to string, err error) {
 	if len(releases) < 1 {
 		return "", errors.New("no releases")
 	}
-	d.updateFromUrl(releases[0].Url)
 	to = releases[0].Version
 	return to, d.UpdateTo(from, to)
 }
@@ -87,6 +86,7 @@ func (d *Dist) UpdateTo(from, to string) (err error) {
 	defer patch.Body.Close()
 	writer := new(bytes.Buffer)
 	binarydist.Patch(reader, writer, patch.Body)
+	err, _ = update.FromStream(writer)
 	return
 }
 
