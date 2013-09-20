@@ -47,7 +47,7 @@ type Dist struct {
 	Project string
 }
 
-type DistRelease struct {
+type Release struct {
 	Version string
 	Url     string
 }
@@ -99,7 +99,7 @@ func (d *Dist) UpdateTo(from, to string) (err error) {
 	return
 }
 
-func (d *Dist) fetchReleases() (releases []DistRelease, err error) {
+func (d *Dist) fetchReleases() (releases []Release, err error) {
 	url := fmt.Sprintf("%s/projects/%s/releases/%s-%s", d.Host, d.Project, runtime.GOOS, runtime.GOARCH)
 	client := d.httpClient()
 	res, err := client.Get(url)
