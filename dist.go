@@ -1,3 +1,4 @@
+// Handle updating new releases from a godist server
 package dist
 
 import (
@@ -51,6 +52,8 @@ type DistRelease struct {
 	Url     string
 }
 
+// Initialize a new godist client, speciying a project name
+// e.g. "ddollar/forego"
 func NewDist(project string) (d *Dist) {
 	d = new(Dist)
 	d.Host = "https://godist.herokuapp.com"
@@ -58,6 +61,7 @@ func NewDist(project string) (d *Dist) {
 	return
 }
 
+// Update the currently running binary to the latest version
 func (d *Dist) Update(from string) (to string, err error) {
 	releases, err := d.fetchReleases()
 	if len(releases) < 1 {
@@ -67,6 +71,7 @@ func (d *Dist) Update(from string) (to string, err error) {
 	return to, d.UpdateTo(from, to)
 }
 
+// Update the currently running binary to a specific version
 func (d *Dist) UpdateTo(from, to string) (err error) {
 	if from == to {
 		return errors.New("nothing to update")
