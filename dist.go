@@ -84,7 +84,6 @@ func (d *Dist) UpdateTo(from, to string) (err error) {
 	defer patch.Body.Close()
 	writer := new(bytes.Buffer)
 	binarydist.Patch(reader, writer, patch.Body)
-	fmt.Println("len", writer.Len())
 	return
 }
 
