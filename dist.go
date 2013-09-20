@@ -69,7 +69,7 @@ func (d *Dist) Update(from string) (to string, err error) {
 }
 
 func (d *Dist) UpdateTo(from, to string) (err error) {
-	if (from == to) {
+	if from == to {
 		return errors.New("nothing to update")
 	}
 	binary, _ := osext.Executable()
