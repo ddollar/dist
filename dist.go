@@ -85,7 +85,11 @@ func (d *Dist) UpdateTo(from, to string) (err error) {
 	}
 	defer patch.Body.Close()
 	writer := new(bytes.Buffer)
-	binarydist.Patch(reader, writer, patch.Body)
+	err = binarydist.Patch(reader, writer, patch.Body)
+	if err != nil {
+		panic(err)
+	}
+	reader.Close()
 	err, _ = update.FromStream(writer)
 	return
 }
