@@ -1,6 +1,8 @@
 package dist
 
 import (
+	"bitbucket.org/kardianos/osext"
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -8,8 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/inconshreveable/go-update"
+	"github.com/kr/binarydist"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"runtime"
 )
 
@@ -54,25 +58,34 @@ func NewDist(project string) (d *Dist) {
 	return
 }
 
-func (d *Dist) Update() (version string, err error) {
+func (d *Dist) Update(from string) (to string, err error) {
 	releases, err := d.fetchReleases()
 	if len(releases) < 1 {
 		return "", errors.New("no releases")
 	}
 	d.updateFromUrl(releases[0].Url)
-	version = releases[0].Version
-	return
+	to = releases[0].Version
+	return to, d.UpdateTo(from, to)
 }
 
-func (d *Dist) UpdateTo(version string) (err error) {
-	releases, err := d.fetchReleases()
-	for _, release := range releases {
-		if release.Version == version {
-			d.updateFromUrl(release.Url)
-			return
-		}
+func (d *Dist) UpdateTo(from, to string) (err error) {
+	binary, _ := osext.Executable()
+	reader, err := os.Open(binary)
+	if err != nil {
+		return err
 	}
-	return errors.New(fmt.Sprintf("no such version: %s", version))
+	defer reader.Close()
+	url := fmt.Sprintf("%s/projects/%s/diff/%s/%s/%s-%s", d.Host, d.Project, from, to, runtime.GOOS, runtime.GOARCH)
+	client := d.httpClient()
+	patch, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+	defer patch.Body.Close()
+	writer := new(bytes.Buffer)
+	binarydist.Patch(reader, writer, patch.Body)
+	fmt.Println("len", writer.Len())
+	return
 }
 
 func (d *Dist) fetchReleases() (releases []DistRelease, err error) {
