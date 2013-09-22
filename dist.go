@@ -16,6 +16,7 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strings"
 )
 
 var DigicertHighAssuranceCert = `-----BEGIN CERTIFICATE-----
@@ -44,7 +45,9 @@ vEsXCS+0yx5DaMkHJ8HSXPfqIbloEpw8nL+e/IBcm2PN7EeqJSdnoDfzAIJ9VNep
 
 type Dist struct {
 	Host    string
+	Name    string
 	Project string
+	Version string
 }
 
 type Release struct {
@@ -54,26 +57,28 @@ type Release struct {
 
 // Initialize a new godist client, speciying a project name
 // e.g. "ddollar/forego"
-func NewDist(project string) (d *Dist) {
+func NewDist(project string, version string) (d *Dist) {
 	d = new(Dist)
 	d.Host = "https://godist.herokuapp.com"
+	d.Name = strings.Split(project, "/")[1]
 	d.Project = project
+	d.Version = version
 	return
 }
 
 // Update the currently running binary to the latest version
-func (d *Dist) Update(from string) (to string, err error) {
+func (d *Dist) Update() (to string, err error) {
 	releases, err := d.fetchReleases()
 	if len(releases) < 1 {
 		return "", errors.New("no releases")
 	}
 	to = releases[0].Version
-	return to, d.UpdateTo(from, to)
+	return to, d.UpdateTo(to)
 }
 
 // Update the currently running binary to a specific version
-func (d *Dist) UpdateTo(from, to string) (err error) {
-	if from == to {
+func (d *Dist) UpdateTo(to string) (err error) {
+	if d.Version == to {
 		return errors.New("nothing to update")
 	}
 	binary, _ := osext.Executable()
@@ -82,17 +87,15 @@ func (d *Dist) UpdateTo(from, to string) (err error) {
 		return err
 	}
 	defer reader.Close()
-	url := fmt.Sprintf("%s/projects/%s/diff/%s/%s/%s-%s", d.Host, d.Project, from, to, runtime.GOOS, runtime.GOARCH)
-	client := d.httpClient()
-	patch, err := client.Get(url)
+	url := fmt.Sprintf("%s/projects/%s/diff/%s/%s/%s-%s", d.Host, d.Project, d.Version, to, runtime.GOOS, runtime.GOARCH)
+	patch, err := d.httpGet(url)
 	if err != nil {
 		return err
 	}
-	defer patch.Body.Close()
 	writer := new(bytes.Buffer)
-	err = binarydist.Patch(reader, writer, patch.Body)
+	err = binarydist.Patch(reader, writer, bytes.NewReader(patch))
 	if err != nil {
-		panic(err)
+		return err
 	}
 	reader.Close()
 	err, _ = update.FromStream(writer)
@@ -100,14 +103,10 @@ func (d *Dist) UpdateTo(from, to string) (err error) {
 }
 
 func (d *Dist) fetchReleases() (releases []Release, err error) {
-	url := fmt.Sprintf("%s/projects/%s/releases/%s-%s", d.Host, d.Project, runtime.GOOS, runtime.GOARCH)
-	client := d.httpClient()
-	res, err := client.Get(url)
+	body, err := d.httpGet(fmt.Sprintf("%s/projects/%s/releases/%s-%s", d.Host, d.Project, runtime.GOOS, runtime.GOARCH))
 	if err != nil {
 		return nil, err
 	}
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
 	err = json.Unmarshal(body, &releases)
 	return
 }
@@ -127,6 +126,27 @@ func (d *Dist) httpClient() (client *http.Client) {
 	tr := http.Transport{TLSClientConfig: &config}
 	client = &http.Client{Transport: &tr}
 	return
+}
+
+func (d *Dist) httpGet(url string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("User-Agent", fmt.Sprintf("%s/%s dist/%s (%s-%s)", d.Name, d.Version, Version, runtime.GOOS, runtime.GOARCH))
+	res, err := d.httpClient().Do(req)
+	defer res.Body.Close()
+	if res.StatusCode != 200 {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+		return nil, errors.New(string(body))
+	}
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(res.Body)
 }
 
 func (d *Dist) updateFromUrl(url string) (err error) {
