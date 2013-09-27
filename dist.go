@@ -102,6 +102,17 @@ func (d *Dist) UpdateTo(to string) (err error) {
 	return
 }
 
+// Update to a specific version regardless of the starting version
+func (d *Dist) FullUpdate(to string) (err error) {
+	url := fmt.Sprintf("%s/projects/%s/releases/%s/%s-%s/%s", d.Host, d.Project, to, runtime.GOOS, runtime.GOARCH, d.Name)
+	reader, err := d.httpGet(url)
+	if err != nil {
+		return err
+	}
+	err, _ = update.FromStream(bytes.NewReader(reader))
+	return
+}
+
 func (d *Dist) fetchReleases() (releases []Release, err error) {
 	body, err := d.httpGet(fmt.Sprintf("%s/projects/%s/releases/%s-%s", d.Host, d.Project, runtime.GOOS, runtime.GOARCH))
 	if err != nil {
