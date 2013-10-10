@@ -10,7 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"github.com/inconshreveable/go-update"
+	"github.com/ddollar/go-update"
 	"github.com/kr/binarydist"
 	"io/ioutil"
 	"net/http"
